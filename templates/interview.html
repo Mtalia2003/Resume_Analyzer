@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Interview Practice{% endblock %}
+
+{% block content %}
+
+<div class="page-header fade-up">
+  <h2>Interview Practice Questions</h2>
+  <p>AI-generated questions for the skills your resume is missing</p>
+</div>
+
+{% if questions %}
+  {% for item in questions %}
+  <div class="interview-card fade-up" style="animation-delay: {{ loop.index * 0.05 }}s">
+    <div class="interview-header" onclick="toggleCard(this)">
+      <div class="interview-skill">{{ item.skill }}</div>
+      <span class="interview-chevron">▼</span>
+    </div>
+    <div class="interview-body">
+      {% for q in item.questions %}
+      <div class="question-item">
+        <div class="question-num">{{ loop.index }}</div>
+        <div>{{ q }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+  <div class="card fade-up">
+    <p style="color: var(--muted); text-align:center; padding: 2rem">
+      No missing skills were found — your resume is a strong match! 🎉
+    </p>
+  </div>
+{% endif %}
+
+<div class="btn-group fade-up">
+  <a href="{{ url_for('results') }}" class="btn btn-outline">← Back to Results</a>
+  <a href="{{ url_for('index') }}"   class="btn btn-outline">New Analysis</a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleCard(header) {
+    const card = header.parentElement;
+    card.classList.toggle('open');
+  }
+  // Open first card by default
+  const first = document.querySelector('.interview-card');
+  if (first) first.classList.add('open');
+</script>
+{% endblock %}

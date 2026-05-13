@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Analysis Results{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+  <h2>Your Analysis Results</h2>
+  <p>Here's how your resume performs against the job description</p>
+</div>
+
+<!-- ── 1. Score Ring ─────────────────────────── -->
+<div class="card fade-up fade-up-1">
+  <div class="card-title">Overall Match Score</div>
+  <div class="score-section">
+
+    <div class="score-ring-wrapper">
+      <svg class="score-ring" width="130" height="130" viewBox="0 0 120 120"
+           style="--ring-color: {{ scoring.color }}">
+        <circle class="score-ring-bg" cx="60" cy="60" r="54"/>
+        <circle class="score-ring-fill"
+                id="scoreRing"
+                cx="60" cy="60" r="54"
+                stroke="{{ scoring.color }}"/>
+      </svg>
+      <div class="score-label">
+        <div class="score-number" style="color: {{ scoring.color }}">
+          {{ scoring.final_score }}
+        </div>
+        <div class="score-slash">/100</div>
+      </div>
+    </div>
+
+    <div class="score-meta">
+      <div class="score-grade" style="color: {{ scoring.color }}">
+        {{ scoring.grade }}
+      </div>
+      <div class="summary-text">{{ analysis.summary }}</div>
+
+      <div class="score-breakdown">
+        <div class="breakdown-row">
+          <span>AI Semantic</span>
+          <div class="breakdown-bar">
+            <div class="breakdown-bar-fill" data-width="{{ scoring.ai_score }}" style="background: var(--accent)"></div>
+          </div>
+          <span class="breakdown-value">{{ scoring.ai_score }}</span>
+        </div>
+        <div class="breakdown-row">
+          <span>Keyword Match</span>
+          <div class="breakdown-bar">
+            <div class="breakdown-bar-fill" data-width="{{ scoring.keyword_score }}" style="background: var(--green)"></div>
+          </div>
+          <span class="breakdown-value">{{ scoring.keyword_score }}</span>
+        </div>
+      </div>
+      <small style="color:var(--muted); font-size: 0.78rem; display:block; margin-top: 0.6rem">
+        {{ kw_matched }} / {{ kw_total }} job description keywords found in resume
+      </small>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── 2. Skills Grid ─────────────────────────── -->
+<div class="card fade-up fade-up-2">
+  <div class="card-title">Skills Breakdown</div>
+  <div class="skills-grid">
+
+    <div class="skills-panel">
+      <div class="skills-panel-title green">✓ Found in Resume ({{ analysis.found_skills | length }})</div>
+      <div>
+        {% for skill in analysis.found_skills %}
+          <span class="skill-chip found">✓ {{ skill }}</span>
+        {% else %}
+          <span style="color: var(--muted); font-size:0.85rem">No matching skills detected.</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="skills-panel">
+      <div class="skills-panel-title red">✗ Missing / To Develop ({{ analysis.missing_skills | length }})</div>
+      <div>
+        {% for skill in analysis.missing_skills %}
+          <span class="skill-chip missing">✗ {{ skill }}</span>
+        {% else %}
+          <span style="color: var(--muted); font-size:0.85rem">No critical gaps found!</span>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── 3. Strengths & Weaknesses ─────────────── -->
+<div class="card fade-up fade-up-3">
+  <div class="card-title">Strengths & Weaknesses</div>
+  <div class="skills-grid">
+
+    <div>
+      <p style="font-size:0.82rem; font-weight:700; color: var(--green); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.8rem">Strengths</p>
+      <ul class="bullet-list green">
+        {% for s in analysis.strengths %}
+          <li>{{ s }}</li>
+        {% else %}
+          <li>No specific strengths identified.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <p style="font-size:0.82rem; font-weight:700; color: var(--red); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.8rem">Areas to Improve</p>
+      <ul class="bullet-list red">
+        {% for w in analysis.weaknesses %}
+          <li>{{ w }}</li>
+        {% else %}
+          <li>No major weaknesses identified.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── 4. ATS Checklist ───────────────────────── -->
+<div class="card fade-up fade-up-4">
+  <div class="card-title">ATS Compatibility Checklist</div>
+  <div class="ats-list">
+    {% for check in ats_checks %}
+    <div class="ats-item">
+      <div class="ats-status {{ 'pass' if check.passed else 'fail' }}">
+        {{ '✓' if check.passed else '✗' }}
+      </div>
+      <div>
+        <div class="ats-check-name">{{ check.check }}</div>
+        <div class="ats-check-msg">{{ check.message }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if analysis.ats_flags %}
+  <div class="divider"></div>
+  <p style="font-size:0.82rem; font-weight:700; color:var(--amber); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.6rem">⚠ AI-Detected Flags</p>
+  {% for flag in analysis.ats_flags %}
+    <div class="flag-item">⚠ {{ flag }}</div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<!-- ── 5. Action Buttons ──────────────────────── -->
+<div class="card fade-up fade-up-5">
+  <div class="card-title">Next Steps</div>
+  <div class="btn-group">
+
+    <button class="btn btn-outline" id="voiceBtn" onclick="playVoice()">
+      🎤 Hear Summary
+    </button>
+
+    {% if analysis.missing_skills %}
+    <a href="{{ url_for('interview') }}" class="btn btn-green">
+      📝 Practice Interview Questions
+    </a>
+    {% endif %}
+
+    <a href="{{ url_for('report') }}" class="btn btn-outline">
+      📄 Download PDF Report
+    </a>
+
+    <a href="{{ url_for('index') }}" class="btn btn-outline">
+      ← Analyze Another Resume
+    </a>
+
+  </div>
+
+  <!-- Audio Player (shown after voice is fetched) -->
+  <div class="audio-player" id="audioPlayer">
+    <p style="font-size:0.82rem; color:var(--muted); margin-bottom:0.5rem">🔊 AI Voice Summary</p>
+    <audio id="audioEl" controls></audio>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Score Ring Animation ─────────────────────
+  window.addEventListener('load', () => {
+    const ring       = document.getElementById('scoreRing');
+    const score      = {{ scoring.final_score }};
+    const circumference = 339.29;
+    const offset     = circumference - (score / 100) * circumference;
+
+    setTimeout(() => {
+      ring.style.strokeDashoffset = offset;
+    }, 200);
+
+    // Breakdown bars
+    document.querySelectorAll('.breakdown-bar-fill').forEach(bar => {
+      const w = bar.dataset.width;
+      setTimeout(() => { bar.style.width = w + '%'; }, 400);
+    });
+  });
+
+  // ── Voice Feedback ───────────────────────────
+  async function playVoice() {
+    const btn = document.getElementById('voiceBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating…';
+
+    try {
+      const res  = await fetch("{{ url_for('voice') }}");
+      const data = await res.json();
+
+      if (data.audio_url) {
+        const player = document.getElementById('audioPlayer');
+        const audio  = document.getElementById('audioEl');
+        audio.src    = data.audio_url;
+        player.style.display = 'block';
+        audio.play();
+        btn.textContent = '🎤 Hear Summary';
+      } else {
+        alert(data.error || 'Voice generation failed.');
+        btn.textContent = '🎤 Hear Summary';
+      }
+    } catch (e) {
+      alert('Voice generation failed. Please try again.');
+      btn.textContent = '🎤 Hear Summary';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Upload Resume{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="hero-badge">✦ Powered by Gemini AI</div>
+  <h1>Analyze your resume<br>against any <span class="highlight">job description</span></h1>
+  <p>Get an ATS score, skill gap analysis, interview prep questions, and a downloadable report — in seconds.</p>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-steps">
+    <p id="loadingMsg">Extracting resume text…</p>
+    <small>This may take 5–10 seconds</small>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="uploadForm">
+
+  <div class="card fade-up fade-up-1">
+    <div class="card-title">Step 1 — Upload Resume</div>
+
+    <div class="upload-zone" id="dropZone">
+      <span class="icon">📄</span>
+      <strong>Drag & drop your resume here</strong>
+      <p>or click to browse — PDF or DOCX, max 5 MB</p>
+      <input type="file" name="resume" id="resumeInput" accept=".pdf,.docx" required />
+    </div>
+    <div class="file-selected" id="fileSelected">✓ <span id="fileName"></span></div>
+  </div>
+
+  <div class="card fade-up fade-up-2">
+    <div class="card-title">Step 2 — Paste Job Description</div>
+    <label for="job_description">Copy the full job description from the posting</label>
+    <textarea
+      name="job_description"
+      id="job_description"
+      placeholder="Paste the complete job description here — the more detail, the better the analysis…"
+      required
+      minlength="50"
+    ></textarea>
+    <small style="color: var(--muted); font-size: 0.8rem; margin-top: 0.5rem; display:block">
+      Minimum 50 characters · Include requirements, responsibilities, and desired skills
+    </small>
+  </div>
+
+  <div class="fade-up fade-up-3">
+    <button type="submit" class="btn btn-primary" id="submitBtn">
+      <span id="btnText">⚡ Analyze My Resume</span>
+    </button>
+  </div>
+
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const dropZone   = document.getElementById('dropZone');
+  const fileInput  = document.getElementById('resumeInput');
+  const fileSelected = document.getElementById('fileSelected');
+  const fileName   = document.getElementById('fileName');
+  const form       = document.getElementById('uploadForm');
+  const submitBtn  = document.getElementById('submitBtn');
+  const overlay    = document.getElementById('loadingOverlay');
+  const loadingMsg = document.getElementById('loadingMsg');
+
+  // Click to open file picker
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  // File selected via picker
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) showFile(fileInput.files[0]);
+  });
+
+  // Drag & drop
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave',  () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      fileInput.files = e.dataTransfer.files;
+      showFile(file);
+    }
+  });
+
+  function showFile(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf','docx'].includes(ext)) {
+      alert('Please upload a PDF or DOCX file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File is too large. Maximum size is 5 MB.');
+      return;
+    }
+    fileName.textContent = file.name;
+    fileSelected.style.display = 'block';
+    dropZone.style.borderColor = 'var(--green)';
+  }
+
+  // Submit with loading state
+  const loadingMessages = [
+    'Extracting resume text…',
+    'Consulting Gemini AI…',
+    'Running ATS checks…',
+    'Building your report…',
+  ];
+  let msgIndex = 0;
+
+  form.addEventListener('submit', e => {
+    submitBtn.disabled = true;
+    overlay.classList.add('active');
+
+    const interval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % loadingMessages.length;
+      loadingMsg.textContent = loadingMessages[msgIndex];
+    }, 2200);
+  });
+</script>
+{% endblock %}

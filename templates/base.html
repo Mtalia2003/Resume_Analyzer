@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Resume Analyzer{% endblock %} — AI Powered</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <nav>
+    <a href="{{ url_for('index') }}" class="nav-logo">resume<span>AI</span></a>
+    <div style="flex:1"></div>
+    {% if request.endpoint == 'results' %}
+      <a href="{{ url_for('index') }}" class="btn btn-outline btn-sm">← New Analysis</a>
+    {% endif %}
+  </nav>
+
+  <div class="container">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">
+              {{ '⚠' if category == 'error' else '✓' }} {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
